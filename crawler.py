@@ -8,7 +8,7 @@ import json
 
 def get_detailed_info(driver, url):
     driver.get(url)
-    time.sleep(3)  # Adjust time based on page load times
+    time.sleep(3)
     
     soup = BeautifulSoup(driver.page_source, 'html.parser')
     image_tag = soup.find('a', {"data-fancybox": True})
@@ -23,32 +23,26 @@ def get_detailed_info(driver, url):
     
     return {"imageURL": image_url, "description": description}
 
-SKIP_RECORDS = 1394  # Update this based on where you left off
+SKIP_RECORDS = 0  # if script stops, set this to the index of the last processed item
 
-# Setup Selenium WebDriver
 service = Service(ChromeDriverManager().install())
 options = webdriver.ChromeOptions()
-# options.add_argument('headless')  # Uncomment for headless mode
+# options.add_argument('headless')  # uncomment for headless mode
 driver = webdriver.Chrome(service=service, options=options)
 
-# URL to access
 url = "https://www.gedenktafeln-in-berlin.de/gedenktafeln/ajax-search?tx_gedenktafeln_pi1%5Bcontroller%5D=Tafeln&tx_gedenktafeln_pi1%5BcurrentPage%5D=1&tx_gedenktafeln_pi1%5Bmodus%5D=10&tx_gedenktafeln_pi1%5Bortsteil%5D=bz-3&type=9999&cHash=86a85e976e9a51ff1f343a3dff6b4b80"
 
-# Check if the data directory exists, create it if not
+# create data directory if it does not exist
 data_dir = os.path.join(os.getcwd(), 'data')
 if not os.path.exists(data_dir):
     os.makedirs(data_dir)
 
-# Define the path for the data.json file within the data directory
 data_file_path = os.path.join(data_dir, 'data.json')
 
-# Open the file in append mode 
 with open(data_file_path, 'a', encoding='utf-8') as f:
-    # Navigate to the URL and collect links
     driver.get(url)
-    time.sleep(10)  # Adjust based on page load times
+    time.sleep(10)  # need to be adjust based on page load times
     
-    # Parse the initial page with BeautifulSoup
     soup = BeautifulSoup(driver.page_source, 'html.parser')
     list_container = soup.find('ul', class_='list-group list-group-flush')
     
@@ -65,7 +59,7 @@ with open(data_file_path, 'a', encoding='utf-8') as f:
                 full_url = f"https://www.gedenktafeln-in-berlin.de{href}"
                 
                 print(f"Processing item {index} of {total_items}: {title}")
-                # Fetch detailed information for each item
+                # fetch detailed info
                 detailed_info = get_detailed_info(driver, full_url)
                 data_to_write = {
                     "url": full_url,
@@ -73,8 +67,6 @@ with open(data_file_path, 'a', encoding='utf-8') as f:
                     **detailed_info
                 }
                 
-                # Append the data as a JSON string followed by a newline
                 f.write(json.dumps(data_to_write, ensure_ascii=False) + '\n')
 
-# Close the Selenium WebDriver
 driver.quit()
